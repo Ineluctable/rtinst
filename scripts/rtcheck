@@ -1,6 +1,14 @@
 #!/bin/bash
-# rTorrent Auto Restart
 
+######################################################################
+#
+#  Copyright (c) 2015 arakasi72 (https://github.com/arakasi72)
+#
+#  --> Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+#
+######################################################################
+
+# rTorrent Auto Restart
 PATH=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin:/sbin
 FILE="$HOME/rtorrent/.session/rtorrent.lock"
 

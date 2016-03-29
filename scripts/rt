@@ -1,5 +1,13 @@
 #!/bin/bash
 
+######################################################################
+#
+#  Copyright (c) 2015 arakasi72 (https://github.com/arakasi72)
+#
+#  --> Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+#
+######################################################################
+
 # rTorrent Stop/Start/Restart
 PATH=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin:/sbin
 FILE="$HOME/rtorrent/.session/rtorrent.lock"
@@ -135,6 +143,11 @@ echo "  restart first stops and then starts $SERVICE"
 exit 0
 }
 
+#exit if run by root
+if [ "$LOGNAME" = "root" ]; then
+  echo "Cannot be run as root, or with sudo"
+  exit
+fi
 
 # Check for options
 while getopts ":hlikad" optname

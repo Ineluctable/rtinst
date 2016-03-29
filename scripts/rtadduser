@@ -1,4 +1,13 @@
 #!/bin/bash
+
+######################################################################
+#
+#  Copyright (c) 2015 arakasi72 (https://github.com/arakasi72)
+#
+#  --> Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+#
+######################################################################
+
 PATH=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin:/sbin
 passfile='/etc/nginx/.htpasswd'
 
@@ -9,7 +18,7 @@ sshport=$(grep 'Port ' /etc/ssh/sshd_config | sed 's/[^0-9]*//g')
 ftpport=$(grep 'listen_port=' /etc/vsftpd.conf | sed 's/[^0-9]*//g')
 cronline1="@reboot sleep 10; /usr/local/bin/rtcheck irssi rtorrent"
 cronline2="*/10 * * * * /usr/local/bin/rtcheck irssi rtorrent"
-SERVERIP=$(ip a s eth0 | awk '/inet / {print$2}' | cut -d/ -f1)
+SERVERIP=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
 
 #get user list
 cd /var/www/rutorrent/conf/users
@@ -28,34 +37,6 @@ random()
     local RAND=`od -t uI -N 4 /dev/urandom | awk '{print $2}'`
     RAND=$((RAND%((($max-$min)+1))+$min))
     echo $RAND
-}
-
-get_scripts() {
-local script_name=$1
-local script_dest=$2
-local attempts=0
-local script_size=0
-local bindest="/usr/local/bin"
-
-while [ $script_size = 0 ]
-  do
-    rm -f $script_name
-    attempts=$(( $attempts + 1 ))
-    if [ $attempts = 20 ]; then
-      echo "There is a problem downloading the scripts. Please check your network or there may be an issue with the github website"
-      echo "If the Github website is down, you can try again later"
-      exit 1
-    fi
-    wget --no-check-certificate https://raw.githubusercontent.com/arakasi72/rtinst/master/$script_name
-    script_size=$(du -b $script_name | cut -f1)
-  done
-
-if ! [ -z "$script_dest" ]; then
-  mv -f $script_name $script_dest
-  if case $script_dest in *"${bindest}"*) true;; *) false;; esac; then
-    chmod 755 $script_dest
-  fi
-fi
 }
 
 find_port() {
@@ -172,8 +153,8 @@ while [ $confirm_name = 1 ]
     addname=$answer
     check_name=1
     if [ "$addname" = "root" ]; then
-      echo "Don't mess with root"
-      exit 1
+      echo "Cannot create root"
+      exit
     fi
 
     while [ $check_name = 1 ]
@@ -240,9 +221,11 @@ if [ "$sshaccess" = "0" ]; then
   fi
 fi
 
+rtgetscripts
+
 if [ "$user" = "$SUDO_USER" ]; then
   echo "Will reset $user config, autodl filters and torrents will not be deleted"
-  get_scripts ru.config /var/www/rutorrent/conf/config.php
+  rtgetscripts /var/www/rutorrent/conf/config.php ru.config 
 fi
 
 #remove existing directory if there
@@ -280,17 +263,7 @@ fi
 WEBPASS=$(genpasswd)
 htpasswd -b $passfile $user $WEBPASS
 
-get_scripts .rtorrent.rc $home/.rtorrent.rc
-
-if ! [ -x /usr/local/bin/rt ]; then
-  get_scripts rt /usr/local/bin/rt
-fi
-
-if ! [ -x /usr/local/bin/rtcheck ]; then
-  get_scripts rtcheck /usr/local/bin/rtcheck
-fi
-
-
+rtgetscripts $home/.rtorrent.rc
 
 sed -i "s/<user name>/$user/g" $home/.rtorrent.rc
 sed -i "s/port_range = 51001-51250/port_range = $newrange/g" $home/.rtorrent.rc
@@ -308,8 +281,8 @@ echo "?>" >> /var/www/rutorrent/conf/users/$user/config.php
 mkdir /var/www/rutorrent/conf/users/$user/plugins/autodl-irssi
 mkdir -p $home/.irssi/scripts/autorun
 cd $home/.irssi/scripts
-wget --no-check-certificate -O autodl-irssi.zip http://update.autodl-community.com/autodl-irssi-community.zip
-unzip -o autodl-irssi.zip
+curl -sL http://git.io/vlcND | grep -Po '(?<="browser_download_url": ")(.*-v[\d.]+.zip)' | xargs wget --quiet -O autodl-irssi.zip
+unzip -o autodl-irssi.zip >> /dev/null 2>&1
 rm autodl-irssi.zip
 cp autodl-irssi.pl autorun/
 mkdir -p $home/.autodl

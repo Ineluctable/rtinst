@@ -1,42 +1,56 @@
-rtinst
-======
+###rtinst
+**NOTE 8th Nov 2015** - Reorganised repository. For existing installations, you will need to manually download and run rtgetscripts:
 
-seedbox installation
-It has been tested with clean installs of Ubuntu 12.04, 12.05, 13.10, and 14.04, 14.10 and Debian Wheezy (7.6) and Debian 8 beta2
+	wget --no-check-certificate https://raw.githubusercontent.com/arakasi72/rtinst/master/scripts/rtgetscripts
+	sudo bash rtgetscripts
+	
+======
+####0. 30 Second Guide
+
+Download script
+
+	wget --no-check-certificate https://raw.githubusercontent.com/arakasi72/rtinst/master/rtinst.sh
+
+and then to run it:
+
+	bash rtinst.sh
+
+or if you run it from a non-root sudo user:
+
+	sudo bash rtinst.sh
+
+**IMPORTANT: NOTE THE NEW SSH PORT AND MAKE SURE YOU CAN SSH INTO YOUR SERVER BEFORE CLOSING THE EXISTING SESSION**
+
+
+
+####1. Introduction
+Seedbox installation
+
+It has been tested with clean installs of: 
+
+	Ubuntu 12
+	Ubuntu 13
+	Ubuntu 14
+	Ubuntu 15
+	Debian 7
+	Debian 8
 
 Services that will be installed and configured are
 
 	1. vsftpd - ftp server
 	2. libtorrent/rtorrent
 	3. rutorrent
-	4. Nginx
+	4. Nginx (webserver)
 	5. autodl-irssi
+	6. webmin (optional see section 3.7 below)
 
-I use nginx, it uses less system resources, and I find it easier to configure than apache2. I don't think the difference is huge, given that we will have at most a handful of users, accessing our server, but unless you really want to stick with Apache I would recommend nginx, it is what I am currently using on my live seedbox.
+It takes about 10 minutes to run, depending on your server setup.
 
-It uses latest versions of all software at time of posting.
+After you have run the script and everything is working, I suggest a reboot, the script does not automate this reboot, you need to do it manually using the reboot command.
 
-After you have run the script and everything is working, I suggest a reboot.
+####[2. Main Script](rtinst.sh)
 
-1.1 Log into your server
-
-Log into your server with a terminal client like Putty. Fill in the following details in Putty: 
-host name: The IP address or the host name e.g. ksxxxxxx.kimsufi.ovh.com
-protocol: SSH (port 22)
-username: root
-password: use the password your vendor provided
-
-This is not a fork of seed box from scratch.It will install vsftps, rtorrent, rutorrent, autodl-irssi, and nginx, as well as all the configuration, so on completion of the script your seedbox will be ready for use.
-
-This script has been tested on Ubuntu 12.04, 12.05, 13.10, 14.04, and Debian 7.
-
-It takes about 10 minutes to run.
-
-1.1 Main Script
-
-You can run the script with -d option to include implementation of https downloads 
-
-Run the script from root, or if you have a sudo user already set up you can run it from there. If for some reason it is interrupted you can run it again to completion. 
+Run the script from root, or if you have a sudo user already set up you can run it from there. If for some reason it is interrupted you can run it again to completion. Running the script multiple times will not cause any problems.
 
 First download the script:
 
@@ -61,7 +75,7 @@ if you run it with -l option it will create the rtinst.log file with detailed ou
 
 The script will assign a random ssh port for security purposes. It will display this on the screen when it has finished running and write it to ~/rtinst.info
 
-IMPORTANT: NOTE THE NEW SSH PORT AND MAKE SURE YOU CAN SSH INTO YOUR SERVER BEFORE CLOSING THE EXISTING SESSION
+**IMPORTANT: NOTE THE NEW SSH PORT AND MAKE SURE YOU CAN SSH INTO YOUR SERVER BEFORE CLOSING THE EXISTING SESSION**
 
 For security the script assigns ftp to a random port number. You will need to use this port number in your ftp client. It will display the port number at the end of the script, and will also write it to ~/rtinst.info
 
@@ -71,53 +85,88 @@ To access that information just use the following command
 
 	cat ~/rtinst.info
 
-1.2 Additional scripts
+####3. Admin Scripts
 
-A number of additional scripts will be installed that carry out a variety of useful functions. These will be installed by the main script but if you want to get the latest versions you can run the following:
+A number of additional scripts will be installed that carry out a variety of useful functions. These will be installed by the main script. So you don't need to remember all the script names you can run rtadmin which will, present a menu to launch the other scripts listed in this section. 
 
-	wget --no-check-certificate https://raw.githubusercontent.com/arakasi72/rtinst/master/rtgetscripts
+	sudo rtadmin
+
+If you get an error run the following, you will only need to this once, and subsequently the prior command will work
+
+	wget --no-check-certificate https://raw.githubusercontent.com/arakasi72/rtinst/master/scripts/rtgetscripts
 	sudo bash rtgetscripts
-	rm rtgetscripts
+	
+All the scripts are downloaded to /usr/local/bin
 
-1.2.1 rtadduser
+######[3.1 rtgetscripts](scripts/rtgetscripts)
+
+This will install update all the rtinst scripts making sure you have the latest versions:
+
+	sudo rtgetscripts
+
+
+######[3.2 rtadduser](scripts/rtadduser)
 
 This will add new users. Ensuring there are no conflicts with the existing user ports. You can use it to create brand new users, or reset the config on existing users. If you use it on an existing user, you will NOT lose any torrents, files, of autodl-filters. It will just reset the ports used.
-to run this:
+To run this:
 
 	sudo rtadduser
 and enter the information asked for.
 
-1.2.2 rtremove
+######[3.3 rtremove](scripts/rtremove)
 
 WARNING: This will completely remove a user wiping all their config and data, and removing them from the system.
-to run this:
+To run this:
 
 	sudo rtremove
 
 and enter the user name when asked
 
-1.2.3 rtdload
+######[3.4 rtdload](scripts/rtdload)
 
 This script will enable or disable https download
 
-to enable:
+To run:
 
-	sudo rtdload enable
+	sudo rtdload
 
-to disable:
+It will tell you the current status, and ask if you want to change it.
 
-	sudo rtdload disable
+If enabled you can access at https://SERVER_IP/download/user_name
 
-The following scripts can be used by any user
+######[3.5 rtupdate](scripts/rtupdate)
 
-1.2.4 rtpass
+This script can upgrade, (or downgrade), the libtorrent/rtorrent version installed. To run this:
+
+	sudo rtupdate
+
+######[3.6 rutupgrade](scripts/rutupgrade)
+
+This script upgrades Rutorrent. It retains all your config and settings, as well as providing a rollback capability.
+
+To run this:
+
+	sudo rutupgrade
+
+######[3.7 rtwebmin](scripts/rtwebmin)
+
+This will install webmin, (if not already installed), and configure nginx as a reverse proxy allowing you to access webmin using https://SERVER-IP/webmin
+To run this:
+
+	sudo rtwebmin
+
+####4. User Scripts
+
+The scripts in this section can be run by any user other than root. They cannot be run by root as they are not applicable to root.
+
+######[4.1 rtpass](scripts/rtpass)
 
 This will allow user to change their rutorrent password.
 to run this:
 
 	rtpass
 
-1.2.5 rt
+######[4.2 rt](scripts/rt)
 
 This script can stop, start, or restart rtorrent or irssi. Use the arguments stop start or restart, with no arguments it will tell tell you if rtorrent is running or not
 
@@ -134,3 +183,16 @@ If you use the option -i it will switch to irssi
 	rt -i stop
 	rt -i start
 	rt -i restart
+
+
+-------------------------------------------------------------------------
+
+ Copyright (c) 2015 arakasi72 (https://github.com/arakasi72)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: 
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. 
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+ --> Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
